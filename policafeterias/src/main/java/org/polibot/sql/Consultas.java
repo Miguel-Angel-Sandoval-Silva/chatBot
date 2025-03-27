@@ -43,6 +43,8 @@ public class Consultas {
         return productos;
     }
 
+
+
     public String[] mostrarMenu(String categoria, List<Producto> productos) {
         List<String> lista = new ArrayList<>();
 

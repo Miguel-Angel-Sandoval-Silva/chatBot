@@ -21,7 +21,7 @@ public class Meserito extends TelegramLongPollingBot {
     private String infoPedido;
     //1586280541L
     //Jared Admin 5730808185L
-    private long adminID = 6809111636L; // Reemplaza con el ID real del administrador
+    private long adminID = 1984940522L; // Reemplaza con el ID real del administrador
     private boolean pedidoGenerado = false;
 
     private Consultas consultar = new Consultas();
@@ -111,6 +111,9 @@ public class Meserito extends TelegramLongPollingBot {
             } else if (message.equals("/deleteCafeteria")) {
                 estado.adminOperation = "deleteCafeteria";
                 mostrarListaCafeterias(chatId, estado);
+            } else if (message.equals("/readCafeteria")) {
+                estado.adminOperation = "readCafeteria";
+                mostrarListaCafeterias(chatId, estado);
             } else {
                 responder(chatId, "Por favor seleccione una opción válida.");
                 mostrarMenuAdmin(chatId, estado);
@@ -126,6 +129,9 @@ public class Meserito extends TelegramLongPollingBot {
                 case "deleteCafeteria":
                     procesarEliminarCafeteria(message, chatId, estado);
                     break;
+                case "readCafeteria":
+                    procesarVerCafeterias(message, chatId, estado);
+                    break;
                 case "addProduct":
                     procesarAgregarProducto(message, chatId, estado);
                     break;
@@ -134,6 +140,9 @@ public class Meserito extends TelegramLongPollingBot {
                     break;
                 case "deleteProduct":
                     procesarEliminarProducto(message, chatId, estado);
+                    break;
+                case "readProduct":
+                    procesarVerProductos(message, chatId, estado);
                     break;
                 default:
                     responder(chatId, "Operación no válida.");
@@ -149,7 +158,8 @@ public class Meserito extends TelegramLongPollingBot {
         String menu = "Bienvenido administrador, por favor seleccione una opción:\n" +
                 "/addCafeteria - Agregar cafetería\n" +
                 "/modifyCafeteria - Modificar cafetería\n" +
-                "/deleteCafeteria - Eliminar cafetería";
+                "/deleteCafeteria - Eliminar cafetería\n" +
+                "/readCafeteria - Ver cafetería";
         responder(chatId, menu);
         estado.adminOperation = null;
         estado.adminStep = 0;
@@ -174,6 +184,26 @@ public class Meserito extends TelegramLongPollingBot {
             mostrarMenuAdmin(chatId, estado);
         }
     }
+
+    private void procesarVerCafeterias(String message, Long chatId, EstadoUsuario estado) {
+        // Se obtiene la lista de nombres de cafeterías desde Consulta
+        List<String> cafeterias = consultar.obtenerCafeterias();
+
+        if (cafeterias != null && !cafeterias.isEmpty()) {
+            StringBuilder respuesta = new StringBuilder("Lista de Cafeterías:\n");
+            // Iteramos sobre cada nombre en la lista
+            for (String nombre : cafeterias) {
+                respuesta.append("- ").append(nombre).append("\n");
+            }
+            responder(chatId, respuesta.toString());
+        } else {
+            responder(chatId, "No se encontraron cafeterías.");
+        }
+        // Se muestra el menú de administración al finalizar
+        mostrarMenuAdmin(chatId, estado);
+    }
+
+
 
     private void mostrarListaCafeterias(Long chatId, EstadoUsuario estado) {
         List<String> cafeterias = consultar.obtenerCafeterias();
@@ -250,7 +280,8 @@ public class Meserito extends TelegramLongPollingBot {
         String acciones = "Seleccione una acción:\n" +
                 "/addProduct - Agregar producto\n" +
                 "/modifyProduct - Modificar producto\n" +
-                "/deleteProduct - Eliminar producto";
+                "/deleteProduct - Eliminar producto\n" +
+                "/readProduct - Eliminar producto";
         responder(chatId, acciones);
     }
 
@@ -286,6 +317,28 @@ public class Meserito extends TelegramLongPollingBot {
             mostrarAccionesCategoria(chatId, estado);
         }
     }
+    private void procesarVerProductos(String message, Long chatId, EstadoUsuario estado) {
+        // Se obtiene la lista de productos para la cafetería y categoría seleccionadas
+        List<Producto> productos = consultar.obtenerProductosPorCategoria(estado.selectedCafeteria, estado.selectedCategory);
+
+        if (productos == null || productos.isEmpty()) {
+            responder(chatId, "No hay productos en la categoría '" + estado.selectedCategory +
+                    "' para la cafetería '" + estado.selectedCafeteria + "'.");
+        } else {
+            StringBuilder sb = new StringBuilder("Productos en la categoría '" + estado.selectedCategory + "':\n");
+            for (Producto producto : productos) {
+                // Se muestra el identificador y nombre de cada producto.
+                sb.append("/").append(producto.getId())
+                        .append(" - ").append(producto.getNombre())
+                        .append("\n");
+            }
+            responder(chatId, sb.toString());
+        }
+        // Opcional: Regresar al menú principal o a otro flujo según la lógica de la aplicación.
+        mostrarMenuAdmin(chatId, estado);
+    }
+
+
 
     private void mostrarProductosEnCategoria(Long chatId, EstadoUsuario estado) {
         List<Producto> productos = consultar.obtenerProductosPorCategoria(estado.selectedCafeteria, estado.selectedCategory);
